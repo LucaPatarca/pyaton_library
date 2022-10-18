@@ -1,0 +1,8 @@
+LICENSE
+README.md
+setup.py
+pyaton/src/pyaton.py
+pyaton/src/pyaton.egg-info/PKG-INFO
+pyaton/src/pyaton.egg-info/SOURCES.txt
+pyaton/src/pyaton.egg-info/dependency_links.txt
+pyaton/src/pyaton.egg-info/top_level.txt
