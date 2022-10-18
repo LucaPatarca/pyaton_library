@@ -1,8 +1,0 @@
-LICENSE
-README.md
-setup.py
-pyaton_storage/src/aton.py
-pyaton_storage/src/pyaton_storage.egg-info/PKG-INFO
-pyaton_storage/src/pyaton_storage.egg-info/SOURCES.txt
-pyaton_storage/src/pyaton_storage.egg-info/dependency_links.txt
-pyaton_storage/src/pyaton_storage.egg-info/top_level.txt
