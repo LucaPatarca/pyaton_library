@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyaton",                     # This is the name of the package
-    version="0.0.1",                        # The initial release version
+    version="0.0.2",                        # The initial release version
     author="Luca Patarca",                     # Full name of the author
     description="Get informations about your Aton Green Storage solar panel system",
     long_description=long_description,      # Long description read from the the readme file
