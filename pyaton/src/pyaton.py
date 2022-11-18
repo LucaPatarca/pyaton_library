@@ -8,19 +8,27 @@ DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
 class APIStatus:
     """Represents the status of a solar panel array"""
     def __init__(self) -> None:
-        self.current_battery_status = 0
-        self.current_house_consumption = 0
-        self.current_solar_production = 0
-        self.current_battery_power = 0
-        self.current_grid_power = 0
+        self.battery_status = 0
+        self.house_consumption = 0
+        self.solar_production = 0
+        self.battery_power = 0
+        self.grid_power = 0
 
-        self.grid_to_house = False
-        self.solar_to_battery = False
-        self.solar_to_grid = False
-        self.battery_to_house = False
-        self.solar_to_house = False
-        self.grid_to_battery = False
-        self.battery_to_grid = False
+        self.is_grid_to_house = False
+        self.is_solar_to_battery = False
+        self.is_solar_to_grid = False
+        self.is_battery_to_house = False
+        self.is_solar_to_house = False
+        self.is_grid_to_battery = False
+        self.is_battery_to_grid = False
+
+        self.grid_to_house = 0
+        self.solar_to_battery = 0
+        self.solar_to_grid = 0
+        self.battery_to_house = 0
+        self.solar_to_house = 0
+        self.grid_to_battery = 0
+        self.battery_to_grid = 0
 
         self.last_update = datetime.datetime.min
 
@@ -34,19 +42,34 @@ class APIStatus:
         self.grid_frequency = 0.0
 
     def update(self, json) -> None:
-        self.current_battery_status = json["soc"]
-        self.current_house_consumption = json["pUtenze"]
-        self.current_battery_power = json["pBatteria"]
-        self.current_solar_production = json["pSolare"]
-        self.current_grid_power = json["pRete"]
+        self.battery_status = json["soc"]
+        self.house_consumption = json["pUtenze"]
+        self.battery_power = json["pBatteria"]
+        self.solar_production = json["pSolare"]
+        self.grid_power = json["pRete"]
 
-        self.grid_to_house = int(json["status"]) & 1 == 1
-        self.solar_to_battery = int(json["status"]) & 2 == 2
-        self.solar_to_grid = int(json["status"]) & 4 == 4
-        self.battery_to_house = int(json["status"]) & 8 == 8
-        self.solar_to_house = int(json["status"]) & 16 == 16
-        self.grid_to_battery = int(json["status"]) & 32 == 32
-        self.battery_to_grid = int(json["status"]) & 64 == 64
+        self.is_grid_to_house = int(json["status"]) & 1 == 1
+        self.is_solar_to_battery = int(json["status"]) & 2 == 2
+        self.is_solar_to_grid = int(json["status"]) & 4 == 4
+        self.is_battery_to_house = int(json["status"]) & 8 == 8
+        self.is_solar_to_house = int(json["status"]) & 16 == 16
+        self.is_grid_to_battery = int(json["status"]) & 32 == 32
+        self.is_battery_to_grid = int(json["status"]) & 64 == 64
+
+        if(self.is_solar_to_grid):
+            pass
+        if(self.is_solar_to_house):
+            pass
+        if(self.is_solar_to_battery):
+            pass
+        if(self.is_grid_to_house):
+            pass
+        if(self.is_grid_to_battery):
+            pass
+        if(self.is_battery_to_house):
+            pass
+        if(self.is_battery_to_grid):
+            pass
 
         self.last_update = datetime.datetime.strptime(json["data"], DATETIME_FORMAT).isoformat()
 
@@ -85,6 +108,7 @@ class AtonAPI:
         self.username = username
         self.sn = sn
         self.id_impianto = id_impianto
+        self.cookies = None
         self.interval = 30
         self.status = APIStatus()
 
@@ -114,10 +138,11 @@ class AtonAPI:
         id_impianto = resp.text[id_impianto_start:id_impianto_end]
         id_impianto = int(id_impianto)
 
-        if sn and id_impianto > 0:
+        if sn and id_impianto > 0 and len(resp.cookies) > 0:
             self.id_impianto = str(id_impianto)
             self.sn = sn
             self.username = username
+            self.cookies = resp.cookies
 
             return True
 
@@ -129,10 +154,20 @@ class AtonAPI:
             HOST + "set_request.php",
             params={"sn": self.sn, "request": "MONITOR", "intervallo": self.interval},
             timeout=5,
+            cookies=self.cookies,
         )
+        if res.status_code == 401:
+            raise NoAuth("Re-authentication needed")
         if res.status_code != 200 or res.text != "ok":
             raise CommunicationFailed("Cannot send monitor command")
-        res = get(HOST + "get_monitor.php", params={"sn": self.sn}, timeout=5)
+        res = get(
+            HOST + "get_monitor.php",
+            params={"sn": self.sn},
+            timeout=5,
+            cookies=self.cookies,
+            )
+        if res.status_code == 401:
+            raise NoAuth("Re-authentication needed")
         if res.status_code != 200:
             raise CommunicationFailed("Cannot get status from api")
         data = json.loads(res.text)
