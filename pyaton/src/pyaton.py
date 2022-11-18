@@ -1,6 +1,7 @@
 import json
 from requests import post, get
 import datetime
+from fake_useragent import UserAgent
 
 HOST = "https://www.atonstorage.com/atonTC/"
 DATETIME_FORMAT = "%d/%m/%Y %H:%M:%S"
@@ -42,11 +43,11 @@ class APIStatus:
         self.grid_frequency = 0.0
 
     def update(self, json) -> None:
-        self.battery_status = json["soc"]
-        self.house_consumption = json["pUtenze"]
-        self.battery_power = json["pBatteria"]
-        self.solar_production = json["pSolare"]
-        self.grid_power = json["pRete"]
+        self.battery_status = float(json["soc"])
+        self.house_consumption = int(json["pUtenze"])
+        self.battery_power = int(json["pBatteria"])
+        self.solar_production = int(json["pSolare"])
+        self.grid_power = int(json["pRete"])
 
         self.is_grid_to_house = int(json["status"]) & 1 == 1
         self.is_solar_to_battery = int(json["status"]) & 2 == 2
@@ -110,6 +111,7 @@ class AtonAPI:
         self.id_impianto = id_impianto
         self.cookies = None
         self.interval = 30
+        self.user_agent = UserAgent()
         self.status = APIStatus()
 
     def authenticate(self, username, password) -> bool:
@@ -117,7 +119,7 @@ class AtonAPI:
         resp = post(
             HOST + "index.php",
             data={"username": username, "password": password},
-            timeout=5,
+            timeout=15,
             allow_redirects=False,
         )
         if resp.status_code != 200:
@@ -150,11 +152,16 @@ class AtonAPI:
 
     def fetch_data(self):
         """Fetches the current status from the website and saves it in this class status"""
+        ua = self.user_agent.random
+        headers = {
+            'User-Agent': ua,
+        }
         res = get(
             HOST + "set_request.php",
             params={"sn": self.sn, "request": "MONITOR", "intervallo": self.interval},
-            timeout=5,
+            timeout=15,
             cookies=self.cookies,
+            headers=headers,
         )
         if res.status_code == 401:
             raise NoAuth("Re-authentication needed")
@@ -163,9 +170,10 @@ class AtonAPI:
         res = get(
             HOST + "get_monitor.php",
             params={"sn": self.sn},
-            timeout=5,
+            timeout=15,
             cookies=self.cookies,
-            )
+            headers=headers,
+        )
         if res.status_code == 401:
             raise NoAuth("Re-authentication needed")
         if res.status_code != 200:
