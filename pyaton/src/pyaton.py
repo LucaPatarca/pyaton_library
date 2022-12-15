@@ -88,7 +88,7 @@ class APIStatus:
         return self.bought_energy + self.self_consumed_energy
 
     @property
-    def self_sufficiency(self) -> int:
+    def self_sufficiency(self) -> float:
         return 100 - ((self.bought_energy / self.consumed_energy) * 100)
 
 
@@ -111,7 +111,7 @@ class AtonAPI:
         self.id_impianto = id_impianto
         self.cookies = None
         self.interval = 30
-        self.user_agent = UserAgent()
+        self.user_agent = UserAgent(fallback="Mozilla/5.0 (iPhone; CPU iPhone OS 14_2 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 LightSpeed [FBAN/MessengerLiteForiOS;FBAV/338.0.0.24.111;FBBV/330724588;FBDV/iPhone12,1;FBMD/iPhone;FBSN/iOS;FBSV/14.2;FBSS/2;FBCR/;FBID/phone;FBLC/en;FBOP/0]")
         self.status = APIStatus()
 
     def authenticate(self, username, password) -> bool:
@@ -156,24 +156,30 @@ class AtonAPI:
         headers = {
             'User-Agent': ua,
         }
-        res = get(
-            HOST + "set_request.php",
-            params={"sn": self.sn, "request": "MONITOR", "intervallo": self.interval},
-            timeout=15,
-            cookies=self.cookies,
-            headers=headers,
-        )
+        try:
+            res = get(
+                HOST + "set_request.php",
+                params={"sn": self.sn, "request": "MONITOR", "intervallo": self.interval},
+                timeout=15,
+                cookies=self.cookies,
+                headers=headers,
+            )
+        except Exception as err:
+            raise CommunicationFailed from err
         if res.status_code == 401:
             raise NoAuth("Re-authentication needed")
         if res.status_code != 200 or res.text != "ok":
             raise CommunicationFailed("Cannot send monitor command")
-        res = get(
-            HOST + "get_monitor.php",
-            params={"sn": self.sn},
-            timeout=15,
-            cookies=self.cookies,
-            headers=headers,
-        )
+        try:
+            res = get(
+                HOST + "get_monitor.php",
+                params={"sn": self.sn},
+                timeout=15,
+                cookies=self.cookies,
+                headers=headers,
+            )
+        except Exception as err:
+            raise CommunicationFailed from err
         if res.status_code == 401:
             raise NoAuth("Re-authentication needed")
         if res.status_code != 200:

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pyaton",                     # This is the name of the package
-    version="0.0.2",                        # The initial release version
+    version="0.0.5",                        # The initial release version
     author="Luca Patarca",                     # Full name of the author
     description="Get informations about your Aton Green Storage solar panel system",
     long_description=long_description,      # Long description read from the the readme file
@@ -19,5 +19,5 @@ setuptools.setup(
     python_requires='>=3.6',                # Minimum version requirement of the package
     py_modules=["pyaton"],                    # Name of the python package
     package_dir={'':'pyaton/src'},     # Directory of the source code of the package
-    install_requires=[]                     # Install other dependencies if any
+    install_requires=['fake-useragent>=1.1.1']                     # Install other dependencies if any
 )
